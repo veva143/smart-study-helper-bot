@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Topic | Smart Study Helper Bot</title><meta name="description" content="Notes, important questions and quiz for a topic.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css"></head><body>
+<main>
+<section class="phead"><div class="wrap"><div class="crumb"><a href="library.html">Library</a> / <span id="cs"></span></div><span class="badge" id="bd"></span><h1 id="h"></h1><p id="meta"></p></div></section>
+<div class="wrap"><div class="tabs"><button class="tab on" data-t="n">Notes</button><button class="tab" data-t="q">Questions</button><button class="tab" data-t="z">Quiz</button></div>
+<div class="panel" id="p"></div>
+<div class="nav2"><a class="btn line" id="pv">Previous topic</a><a class="btn gold" id="ask">Ask the AI about this topic</a><a class="btn dark" id="nx">Next topic</a></div></div>
+</main>
+<script src="assets/data.js"></script><script src="assets/quizlib.js"></script><script src="assets/deep.js"></script><script src="assets/layout.js"></script>
+<script>
+var qs=new URLSearchParams(location.search),si=+qs.get("s")||0,ti=+qs.get("t")||0,S=DATA[si]||DATA[0],T=S.topics[ti]||S.topics[0],P=document.getElementById("p");
+var title=T.name.replace(/^U\d\s/,"");document.title=title+" | Smart Study Helper Bot";
+document.getElementById("cs").textContent=S.subject;document.getElementById("bd").textContent=T.name.slice(0,2)+" · "+S.subject;document.getElementById("h").textContent=title;
+document.getElementById("meta").textContent=T.notes.length+" notes · "+T.questions.length+" important questions · "+Quiz.pool(si,ti).length+" quiz questions";
+function nav(id,j,lbl){var a=document.getElementById(id),x=S.topics[j];if(x){a.href="topic.html?s="+si+"&t="+j;a.title=x.name;a.textContent=lbl}else a.style.display="none"}
+nav("pv",ti-1,"← Previous topic");nav("nx",ti+1,"Next topic →");document.getElementById("ask").href="assistant.html?q="+encodeURIComponent("Explain "+title+" in simple words with an example");
+function mark(){try{var r=JSON.parse(localStorage.getItem("read")||"{}");r[si+"-"+ti]=1;localStorage.setItem("read",JSON.stringify(r))}catch(e){}}
+function list(a){return"<ul style='padding-left:20px'>"+a.map(function(x){return"<li>"+x+"</li>"}).join("")+"</ul>"}
+function sec(h,b){return"<h3 style='margin:22px 0 8px;color:#0b1220'>"+h+"</h3>"+b}
+function notes(){mark();var D=DEEP[T.name],h="";
+ if(D){h+=sec("Definition","<p>"+D.def+"</p>")+sec("Explanation",D.explain.map(function(n,i){return'<div class="pt"><div class="pn">'+(i+1)+"</div><div>"+n+"</div></div>"}).join(""))+sec("Example","<div class='qn'>"+D.example+"</div>")+sec("Advantages",list(D.pros))+sec("Disadvantages",list(D.cons))+sec("Important for the exam",list(D.exam))+sec("Summary","<p>"+D.summary+"</p>")+sec("Quick revision points","")}
+ else h+="<div class='qn'>Short notes are shown for this topic. For a full explanation, <a href='assistant.html?q="+encodeURIComponent("Explain "+title+" in detail with example, advantages and exam points")+"'><b>ask the AI Assistant</b></a>.</div>";
+ P.innerHTML=h+T.notes.map(function(n,i){return'<div class="pt"><div class="pn">'+(i+1)+"</div><div>"+n+"</div></div>"}).join("")}
+function qsn(){P.innerHTML="<p class='lead'>Important questions for the exam. Try answering each one in your own words.</p>"+T.questions.map(function(q,i){return'<div class="qn"><b>Q'+(i+1)+".</b> "+q+"</div>"}).join("")}
+var k=0,sc=0,QZ=[];function shuf(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function quiz(){if(k>=QZ.length)return done();var q=QZ[k],n=QZ.length;
+ P.innerHTML='<div class="qh"><span>Question '+(k+1)+" of "+n+"</span><span>Score: "+sc+'</span></div><div class="bar"><i style="width:'+k/n*100+'%"></i></div><h3>'+q.question+"</h3>";
+ shuf(q.options.map(function(t,i){return{t:t,c:i===q.answer}})).forEach(function(o){var b=document.createElement("button");b.className="opt";b.textContent=o.t;b.dataset.c=o.c?1:0;
+  b.onclick=function(){P.querySelectorAll(".opt").forEach(function(x){x.disabled=true;if(x.dataset.c==="1")x.classList.add("ok")});if(o.c)sc++;else b.classList.add("no");
+   var nb=document.createElement("button");nb.className="btn gold";nb.style.marginTop="12px";nb.textContent=k+1<n?"Next question":"See result";nb.onclick=function(){k++;quiz()};P.appendChild(nb)};P.appendChild(b)})}
+function done(){var n=QZ.length;P.innerHTML='<div style="text-align:center;padding:20px 0"><div class="big">'+sc+" / "+n+"</div><p>"+(sc===n?"Perfect! Move to the next topic.":"Read the notes again and retry.")+'</p><button class="btn gold" id="rt">Retry quiz</button></div>';document.getElementById("rt").onclick=function(){k=0;sc=0;QZ=Quiz.pick({si:si,ti:ti},5);quiz()}}
+document.querySelectorAll(".tab").forEach(function(b){b.onclick=function(){document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on")});b.classList.add("on");({n:notes,q:qsn,z:function(){k=0;sc=0;QZ=Quiz.pick({si:si,ti:ti},5);quiz()}})[b.dataset.t]()}});notes();
+</script></body></html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Assistant | Smart Study Helper Bot</title><meta name="description" content="Ask any question and get a clear answer.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css"></head><body><main>
+<section class="phead"><div class="wrap"><h1>AI Assistant</h1><p>Ask any question from any subject. It explains step by step and links you to the matching topic.</p></div></section>
+<div class="wrap" style="padding-bottom:70px"><div class="chat"><div class="msgs" id="m"></div><div class="sug" id="s"></div>
+<div class="cb"><input id="i" placeholder="Type your question, for example: explain hamming code" autocomplete="off" aria-label="Your question"><button class="btn gold" id="go">Send</button></div></div></div></main>
+<script src="assets/data.js"></script><script src="assets/deep.js"></script><script src="assets/nlp.js"></script><script src="assets/layout.js"></script>
+<script>
+var M=document.getElementById("m"),I=document.getElementById("i"),hist=[];
+function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function fmt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>')}
+function add(c,t,src){var d=document.createElement("div");d.className="b "+c;d.innerHTML=fmt(t)+(src?'<div class="src">'+src+"</div>":"");M.appendChild(d);M.scrollTop=M.scrollHeight;return d}
+function local(q){var r=NLP.search(q,3),fx=r.corrected?"I corrected the spelling and found the closest topic.\n\n":"";
+ if(!r.results.length)return"I could not find this in my notes. Rephrase it, or open the [Library](library.html). Detailed answers for any subject come from the online AI when it is connected.";
+ var z=r.results[0],S=DATA[z.si],T=S.topics[z.ti],nm=T.name.replace(/^U\d\s/,""),d=DEEP[T.name],o=fx+"**"+nm+"** ("+S.subject+")\n\n";
+ o+=d?d.def+"\n\n"+d.explain.slice(0,3).map(function(x,i){return(i+1)+". "+x}).join("\n")+"\n\nExample: "+d.example:T.notes.map(function(x,i){return(i+1)+". "+x}).join("\n");
+ o+="\n\n[Open full topic: "+nm+"](topic.html?s="+z.si+"&t="+z.ti+")";
+ var rel=r.results.slice(1).map(function(y){var n=DATA[y.si].topics[y.ti].name.replace(/^U\d\s/,"");return"[ "+n+" ](topic.html?s="+y.si+"&t="+y.ti+")"});
+ return o+(rel.length?"\n\nRelated: "+rel.join("  "):"")}
+async function ask(q){q=q.trim();if(!q)return;add("u",q);I.value="";var w=add("a","Thinking...");hist.push({role:"user",content:q});
+ try{var c=new AbortController(),tm=setTimeout(function(){c.abort()},15000),r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist.slice(-8)}),signal:c.signal});clearTimeout(tm);
+  if(!r.ok)throw 0;var j=await r.json();w.innerHTML=fmt(j.reply)+'<div class="src">AI answer · '+(j.source||"online")+"</div>";hist.push({role:"assistant",content:j.reply})}
+ catch(e){var a=local(q);w.innerHTML=fmt(a)+'<div class="src">Answer from the offline study library</div>';hist.push({role:"assistant",content:a})}
+ M.scrollTop=M.scrollHeight}
+document.getElementById("go").onclick=function(){ask(I.value)};I.onkeydown=function(e){if(e.key==="Enter")ask(I.value)};
+["Explain Hamming code","What is Bayes theorem?","OSI model layers","Difference between stemming and lemmatization"].forEach(function(t){var b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=function(){ask(t)};document.getElementById("s").appendChild(b)});
+add("a","Hi! I am your study assistant. Ask me anything from any subject.\nTry one of the questions below, or type your own.");
+var pq=new URLSearchParams(location.search).get("q");if(pq)ask(pq);
+</script></body></html>

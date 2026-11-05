@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz Center | Smart Study Helper Bot</title><meta name="description" content="Fresh quizzes every time: topic, subject and mixed tests with review.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css"></head><body><main>
+<section class="phead"><div class="wrap"><h1>Quiz Center</h1><p>Every attempt gives a new set of questions and shuffled options.</p></div></section>
+<div class="wrap" style="margin-top:-30px;position:relative;padding-bottom:80px"><div class="panel" id="p"></div></div></main>
+<script src="assets/data.js"></script><script src="assets/quizlib.js"></script><script src="assets/layout.js"></script>
+<script>
+var P=document.getElementById("p"),Q=[],k=0,sc=0,wrong=[],label="";
+function hist(){try{return JSON.parse(localStorage.getItem("hist")||"[]")}catch(e){return[]}}
+function home(){var o=DATA.map(function(s,i){return'<option value="'+i+'">'+s.subject+"</option>"}).join("");
+ var h=hist().slice(-5).reverse().map(function(x){return"<li>"+x.l+": <b>"+x.s+"/"+x.n+"</b> <small>("+x.d+")</small></li>"}).join("");
+ P.innerHTML='<div class="grid" style="margin-top:0"><div class="card"><div class="ico">🎯</div><h3>Topic quiz</h3><p>5 questions on one topic.</p><select id="a" class="search" style="margin:10px 0">'+o+'</select><select id="b" class="search" style="margin-bottom:10px"></select><button class="btn gold" id="g1">Start</button></div>'+
+ '<div class="card"><div class="ico">📚</div><h3>Subject quiz</h3><p>10 questions from one subject.</p><select id="c" class="search" style="margin:10px 0 10px">'+o+'</select><button class="btn gold" id="g2">Start</button></div>'+
+ '<div class="card"><div class="ico">🌍</div><h3>Mixed quiz</h3><p>20 questions from every subject.</p><br><button class="btn gold" id="g3">Start</button></div></div>'+(h?"<h3 style='margin-top:26px'>Your recent scores</h3><ul style='padding-left:20px'>"+h+"</ul>":"");
+ function tp(){document.getElementById("b").innerHTML=DATA[+a.value].topics.map(function(t,j){return'<option value="'+j+'">'+t.name+"</option>"}).join("")}
+ var a=document.getElementById("a");a.onchange=tp;tp();
+ document.getElementById("g1").onclick=function(){go({si:+a.value,ti:+document.getElementById("b").value},5,"Topic: "+DATA[+a.value].topics[+document.getElementById("b").value].name)};
+ document.getElementById("g2").onclick=function(){var i=+document.getElementById("c").value;go({si:i},10,"Subject: "+DATA[i].subject)};
+ document.getElementById("g3").onclick=function(){go({},20,"Mixed quiz")}}
+function go(sc0,n,l){Q=Quiz.pick(sc0,n);k=0;sc=0;wrong=[];label=l;show()}
+function sh(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function show(){if(k>=Q.length)return fin();var q=Q[k],n=Q.length;
+ P.innerHTML='<div class="qh"><span>'+label+" · Question "+(k+1)+" of "+n+"</span><span>Score: "+sc+'</span></div><div class="bar"><i style="width:'+k/n*100+'%"></i></div><h3>'+q.question+"</h3>";
+ q.options.forEach(function(t,i){var b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=function(){var all=P.querySelectorAll(".opt");all.forEach(function(x,j){x.disabled=true;if(j===q.answer)x.classList.add("ok")});if(i===q.answer)sc++;else{b.classList.add("no");wrong.push(q)}
+  var nb=document.createElement("button");nb.className="btn gold";nb.style.marginTop="12px";nb.textContent=k+1<n?"Next question":"See result";nb.onclick=function(){k++;show()};P.appendChild(nb)};P.appendChild(b)})}
+function fin(){var n=Q.length,pc=Math.round(sc/n*100);try{var h=hist();h.push({l:label,s:sc,n:n,d:new Date().toLocaleDateString()});localStorage.setItem("hist",JSON.stringify(h.slice(-30)))}catch(e){}
+ var rv=wrong.map(function(q){return'<div class="qn"><b>'+q.question+'</b><br>Correct answer: '+q.options[q.answer]+'<br><a href="topic.html?s='+q.si+"&t="+q.ti+'"><b>Revise this topic →</b></a></div>'}).join("");
+ P.innerHTML='<div style="text-align:center;padding:10px 0 20px"><div class="big">'+sc+" / "+n+'</div><p>'+pc+"% · "+(pc>=80?"Excellent work!":pc>=50?"Good, revise the topics below.":"Keep practising, read the notes again.")+'</p><button class="btn gold" id="r1">Try a new quiz</button> <button class="btn line" id="r2">Quiz Center</button></div>'+(rv?"<h3>Review of wrong answers</h3>"+rv:"");
+ document.getElementById("r1").onclick=function(){Q=Quiz.pick(lastScope(),n);k=0;sc=0;wrong=[];show()};document.getElementById("r2").onclick=home}
+function lastScope(){var f=Q[0];return label.indexOf("Topic")===0?{si:f.si,ti:f.ti}:label.indexOf("Subject")===0?{si:f.si}:{}}
+home();
+</script></body></html>

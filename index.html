@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Study Helper Bot: Learn Anything</title>
+<meta name="description" content="Smart Study Helper Bot gives notes, quizzes and an AI assistant for any subject. Free, fast and made for students.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css"></head>
+<body>
+<main>
+<section class="hero"><div class="wrap">
+  <span class="pill">Free AI study platform for students</span>
+  <h1>Study any subject. <span>Ask anything.</span></h1>
+  <p>Clear notes, fresh quizzes every time and an AI assistant that explains any topic in simple words.</p>
+  <div class="btns"><a class="btn gold" href="library.html">Explore the Library</a><a class="btn ghost" href="assistant.html">Ask the AI Assistant</a></div>
+</div></section>
+<section class="stats"><div class="wrap"><div>
+  <div class="stat"><b id="n1">0</b><span>Subjects</span></div><div class="stat"><b id="n2">0</b><span>Topics with notes</span></div>
+  <div class="stat"><b id="n3">0</b><span>Quiz questions</span></div><div class="stat"><b>24/7</b><span>AI assistant</span></div>
+</div></div></section>
+<section class="s"><div class="wrap">
+  <div class="eyebrow">What you get</div><h2>Everything you need to revise faster</h2><p class="lead">One place for theory, practice and doubts, built to work on a phone as well as a laptop.</p>
+  <div class="grid">
+    <div class="card"><div class="ico">📘</div><h3>Detailed Notes</h3><p>Topic-wise theory with definitions, examples and exam points.</p></div>
+    <div class="card"><div class="ico">🧠</div><h3>Fresh Quizzes</h3><p>Questions and options change every attempt, so you cannot memorise positions.</p></div>
+    <div class="card"><div class="ico">🤖</div><h3>AI Assistant</h3><p>Ask any question from any subject and get a clear, step by step answer.</p></div>
+    <div class="card"><div class="ico">🔎</div><h3>Smart Search</h3><p>NLP based search finds the right topic even if you misspell a word.</p></div>
+    <div class="card"><div class="ico">📈</div><h3>Progress Tracking</h3><p>See your scores, weak topics and what to revise next.</p></div>
+    <div class="card"><div class="ico">🆓</div><h3>Free Forever</h3><p>No login, no ads and no cost for students.</p></div>
+  </div>
+</div></section>
+<section class="s"><div class="wrap">
+  <div class="eyebrow">How it works</div><h2>Three steps to better marks</h2>
+  <div class="grid steps">
+    <div class="card"><h3>Pick a subject</h3><p>Open the Library and choose any subject and topic.</p></div>
+    <div class="card"><h3>Read and ask</h3><p>Read the notes. Stuck? Ask the AI assistant in plain words.</p></div>
+    <div class="card"><h3>Test yourself</h3><p>Take a quiz and revise the topics you missed.</p></div>
+  </div>
+  <div class="cta"><h2>Ready to start learning?</h2><p>Open the library and begin with any topic today.</p><a class="btn gold" href="library.html">Get started</a></div>
+</div></section>
+</main>
+<script src="assets/data.js"></script>
+<script src="assets/layout.js"></script>
+<script>
+var nT=0,nQ=0;DATA.forEach(function(s){nT+=s.topics.length;s.topics.forEach(function(x){nQ+=x.quiz.length})});
+function count(id,to){var el=document.getElementById(id),n=0,st=Math.max(1,Math.ceil(to/40));var i=setInterval(function(){n=Math.min(to,n+st);el.textContent=n;if(n>=to)clearInterval(i)},25)}
+count("n1",DATA.length);count("n2",nT);count("n3",nQ);
+</script></body></html>

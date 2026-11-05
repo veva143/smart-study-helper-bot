@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Library | Smart Study Helper Bot</title><meta name="description" content="Browse every subject and topic. Search notes, questions and quizzes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/site.css"></head><body>
+<main>
+<section class="phead"><div class="wrap"><h1>Library</h1><p>Every subject and topic in one place. Search, filter and open any topic.</p></div></section>
+<section class="tools"><div class="wrap"><div class="box">
+  <input class="search" id="q" type="search" placeholder="Search a topic, for example: hamming code, bayes theorem, leadership" aria-label="Search topics">
+  <div class="chips" id="chips"></div>
+</div></div></section>
+<div class="wrap"><div class="count" id="count"></div><div class="tg" id="list"></div></div>
+</main>
+<script src="assets/data.js"></script><script src="assets/deep.js"></script><script src="assets/nlp.js"></script><script src="assets/layout.js"></script>
+<script>
+var COL=["#4f7cff","#f08a3c","#16a394","#9b6bff","#e0527a","#d4a017"];
+var all=[];DATA.forEach(function(s,si){s.topics.forEach(function(tp,ti){all.push({si:si,ti:ti,sub:s.subject,name:tp.name,unit:tp.name.slice(0,2),title:tp.name.replace(/^U\d\s/,""),kw:(tp.name+" "+s.subject+" "+tp.keywords).toLowerCase(),n:tp.notes.length,q:tp.questions.length,z:tp.quiz.length})})});
+var cur=-1,list=document.getElementById("list"),box=document.getElementById("q");
+function chips(){var h='<button class="chip'+(cur<0?" on":"")+'" data-i="-1">All subjects ('+all.length+')</button>';
+ DATA.forEach(function(s,i){h+='<button class="chip'+(cur===i?" on":"")+'" data-i="'+i+'">'+s.subject+" ("+s.topics.length+")</button>"});
+ var c=document.getElementById("chips");c.innerHTML=h;c.querySelectorAll(".chip").forEach(function(b){b.onclick=function(){cur=+b.dataset.i;chips();draw()}})}
+function draw(){var words=box.value.toLowerCase().split(/\s+/).filter(Boolean);
+ var r=all.filter(function(x){return(cur<0||x.si===cur)&&words.every(function(w){return x.kw.indexOf(w)>-1})});
+ var note="";if(!r.length&&words.length){var m=NLP.search(box.value,6).results.map(function(z){return all.filter(function(x){return x.si===z.si&&x.ti===z.ti})[0]});r=m.filter(function(x){return cur<0||x.si===cur});if(r.length)note=" (showing closest matches)"}
+ document.getElementById("count").textContent=r.length+" topic"+(r.length==1?"":"s")+" found"+note;
+ list.innerHTML=r.length?r.map(function(x){return'<a class="tcard" style="--c:'+COL[x.si%COL.length]+'" href="topic.html?s='+x.si+'&t='+x.ti+'"><small>'+x.unit+" &middot; "+x.sub.toUpperCase()+"</small><h3>"+x.title+'</h3><div class="m"><span>'+x.n+" notes</span><span>"+x.q+" questions</span><span>"+x.z+" quiz</span></div></a>"}).join(""):'<div class="empty" style="grid-column:1/-1">No topic matches your search. Try the AI Assistant, it can answer any question.</div>'}
+box.oninput=draw;chips();draw();
+</script></body></html>
