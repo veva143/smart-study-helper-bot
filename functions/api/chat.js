@@ -9,7 +9,7 @@ const json = (o, status = 200) => new Response(JSON.stringify(o), { status, head
 
 async function gemini(env, msgs) {
   if (!env.GEMINI_API_KEY) throw new Error("no key");
-  const models = [env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean);
+  const models = [env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash"].filter(Boolean);
   let last = "gemini";
   for (const model of models) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -21,7 +21,7 @@ async function gemini(env, msgs) {
       generationConfig: { maxOutputTokens: 900, temperature: 0.4 }
     })
   });
-  if (!r.ok) { last = "gemini " + model + " HTTP " + r.status; if (r.status === 404 || r.status === 400) continue; throw new Error(last); }
+  if (!r.ok) { last = "gemini " + model + " HTTP " + r.status; if (r.status === 401 || r.status === 403) throw new Error(last); continue; }
   const d = await r.json();
   const t = d.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
   if (!t) { last = "gemini " + model + " empty"; continue; }
