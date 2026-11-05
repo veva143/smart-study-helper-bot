@@ -21,8 +21,8 @@ function local(q){var r=NLP.search(q,3),fx=r.corrected?"I corrected the spelling
  return o+(rel.length?"\n\nRelated: "+rel.join("  "):"")}
 async function ask(q){q=q.trim();if(!q)return;add("u",q);I.value="";var w=add("a","Thinking...");hist.push({role:"user",content:q});
  try{var c=new AbortController(),tm=setTimeout(function(){c.abort()},15000),r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist.slice(-8)}),signal:c.signal});clearTimeout(tm);
-  if(!r.ok)throw 0;var j=await r.json();w.innerHTML=fmt(j.reply)+'<div class="src">AI answer · '+(j.source||"online")+"</div>";hist.push({role:"assistant",content:j.reply})}
- catch(e){var a=local(q);w.innerHTML=fmt(a)+'<div class="src">Answer from the offline study library</div>';hist.push({role:"assistant",content:a})}
+  if(!r.ok){var em;try{em=(await r.json()).errors.join("; ")}catch(_){em="HTTP "+r.status+" (backend not found)"}throw em}var j=await r.json();w.innerHTML=fmt(j.reply)+'<div class="src">AI answer · '+(j.source||"online")+"</div>";hist.push({role:"assistant",content:j.reply})}
+ catch(e){var a=local(q);w.innerHTML=fmt(a)+'<div class="src">Answer from the offline study library'+(typeof e==="string"?" · AI problem: "+esc(e):"")+"</div>";hist.push({role:"assistant",content:a})}
  M.scrollTop=M.scrollHeight}
 document.getElementById("go").onclick=function(){ask(I.value)};I.onkeydown=function(e){if(e.key==="Enter")ask(I.value)};
 ["Explain Hamming code","What is Bayes theorem?","OSI model layers","Difference between stemming and lemmatization"].forEach(function(t){var b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=function(){ask(t)};document.getElementById("s").appendChild(b)});

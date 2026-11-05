@@ -9,7 +9,9 @@ const json = (o, status = 200) => new Response(JSON.stringify(o), { status, head
 
 async function gemini(env, msgs) {
   if (!env.GEMINI_API_KEY) throw new Error("no key");
-  const model = env.GEMINI_MODEL || "gemini-flash-latest";
+  const models = [env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"].filter(Boolean);
+  let last = "gemini";
+  for (const model of models) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
@@ -19,11 +21,13 @@ async function gemini(env, msgs) {
       generationConfig: { maxOutputTokens: 900, temperature: 0.4 }
     })
   });
-  if (!r.ok) throw new Error("gemini " + r.status);
+  if (!r.ok) { last = "gemini " + model + " HTTP " + r.status; if (r.status === 404 || r.status === 400) continue; throw new Error(last); }
   const d = await r.json();
   const t = d.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
-  if (!t) throw new Error("empty");
+  if (!t) { last = "gemini " + model + " empty"; continue; }
   return { reply: t, source: "Gemini" };
+  }
+  throw new Error(last);
 }
 
 async function workersAI(env, msgs) {
@@ -47,6 +51,11 @@ async function groq(env, msgs) {
   return { reply: t, source: "Groq" };
 }
 
+// Open /api/chat in the browser to see which services are configured (no secrets are shown)
+export async function onRequestGet({ env }) {
+  return json({ ok: true, gemini: !!env.GEMINI_API_KEY, cloudflareAI: !!env.AI, groq: !!env.GROQ_API_KEY });
+}
+
 export async function onRequestPost({ request, env }) {
   let body;
   try { body = await request.json(); } catch { return json({ error: "bad request" }, 400); }
@@ -60,13 +69,14 @@ export async function onRequestPost({ request, env }) {
   const cache = caches.default, key = new Request("https://cache.local/chat?q=" + encodeURIComponent(last));
   if (msgs.length === 1) { const hit = await cache.match(key); if (hit) return hit; }
 
+  const errors = [];
   for (const layer of [gemini, workersAI, groq]) {
     try {
       const out = await layer(env, msgs);
       const res = json(out);
       if (msgs.length === 1) { const c = new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "max-age=86400" } }); await cache.put(key, c); }
       return res;
-    } catch (e) { /* try the next layer */ }
+    } catch (e) { errors.push(String(e.message || e)); }
   }
-  return json({ error: "all AI services busy" }, 503);
+  return json({ error: "all AI services busy", errors }, 503);
 }
