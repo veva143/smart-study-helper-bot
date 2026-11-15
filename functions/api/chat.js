@@ -9,10 +9,13 @@ const json = (o, status = 200) => new Response(JSON.stringify(o), { status, head
 
 async function gemini(env, msgs) {
   if (!env.GEMINI_API_KEY) throw new Error("no key");
-  const models = [env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash"].filter(Boolean);
+  const models = [env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash-lite"].filter(Boolean);
   let last = "gemini";
   for (const model of models) {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  let r;
+  try {
+  r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    signal: AbortSignal.timeout(9000),
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
@@ -21,6 +24,7 @@ async function gemini(env, msgs) {
       generationConfig: { maxOutputTokens: 900, temperature: 0.4 }
     })
   });
+  } catch (e) { last = "gemini " + model + " no reply in 9 seconds"; continue; }
   if (!r.ok) { last = "gemini " + model + " HTTP " + r.status; if (r.status === 401 || r.status === 403) throw new Error(last); continue; }
   const d = await r.json();
   const t = d.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
